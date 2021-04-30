@@ -1,3 +1,6 @@
+// clean-bot: Version 1
+// author: Keller Flint
+
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const fs = require("fs");
@@ -194,6 +197,11 @@ client.on('message', msg => {
 });
 
 
-//nodemon --inspect index.js
+//nodemon --inspect index.js for dev stuff
 
-//remember to create data.json on new systems
+//remember to create data.json on new systems & secrets.json
+
+// use npm install discord.js to install dependent packages
+
+// running on the server with pm2:  npm install pm2@latest -g
+// pm2 start index.js
