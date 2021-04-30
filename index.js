@@ -53,7 +53,7 @@ const removeEmptyOrNull = (obj) => {
 
 function sendReminder(task) {
     //messageClient.channels.cache.find(i => i.name === 'general').send();
-    client.guilds.resolve(guildId).channels.resolve(channelId).send('everyone Task: ' + task.task + ' ID: ' + task.id);
+    client.guilds.resolve(guildId).channels.resolve(channelId).send('@everyone Task: ' + task.task + ' ID: ' + task.id);
 }
 
 function sendMessage(message) {
