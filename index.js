@@ -40,9 +40,22 @@ function updateTaskReminderDate(tasks, item) {
     return tasks;
 }
 
+const removeEmptyOrNull = (obj) => {
+    Object.keys(obj).forEach(k =>
+        (obj[k] && typeof obj[k] === 'object') && removeEmptyOrNull(obj[k]) ||
+        (!obj[k] && obj[k] !== undefined) && delete obj[k]
+    );
+    return obj;
+};
+
 function sendReminder(task) {
     //messageClient.channels.cache.find(i => i.name === 'general').send();
-    client.guilds.resolve(guildId).channels.resolve(channelId).send('everyone ' + task.task)
+    client.guilds.resolve(guildId).channels.resolve(channelId).send('everyone Task: ' + task.task + ' ID: ' + task.id);
+}
+
+function sendMessage(message) {
+    //messageClient.channels.cache.find(i => i.name === 'general').send();
+    client.guilds.resolve(guildId).channels.resolve(channelId).send(message);
 }
 
 function reminders() {
@@ -153,7 +166,23 @@ client.on('message', msg => {
             case "done":
                 fs.readFile("data.json", function (err, data) {
                     if (err) throw err;
-                    const tasks = JSON.parse(data);
+                    let tasks = JSON.parse(data);
+                    // rebuilding the json array like this is so god damn stupid but when I use delete it insists on leaving null values in my json and splice doesn't seem to work at all
+                    let newTasks = [];
+
+                    for (let i = 0; i < tasks.length; i++) {
+                        if (tasks[i].id == args[1]) {
+                            sendMessage("Task: " + tasks[i].task + " ID:" + tasks[i].id + " resolved.");
+                        } else {
+                            newTasks.push(tasks[i]);
+                        }
+                    }
+
+                    fs.writeFile("data.json", JSON.stringify(newTasks), err => {
+                        if (err) throw err;
+                        console.log("Done writing!");
+                    });
+
                 });
                 break;
             default:
