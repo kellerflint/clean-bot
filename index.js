@@ -40,9 +40,9 @@ function updateTaskReminderDate(tasks, item) {
     return tasks;
 }
 
-function sendReminder(messageClient, task) {
+function sendReminder(task) {
     //messageClient.channels.cache.find(i => i.name === 'general').send();
-    client.guilds.resolve(guildId).channels.resolve(channelId).send('@everyone ' + task.task)
+    client.guilds.resolve(guildId).channels.resolve(channelId).send('everyone ' + task.task)
 }
 
 function reminders() {
@@ -61,18 +61,18 @@ function reminders() {
 
             if (dateCreatedHours < earlyReminderThreshold) {
                 if (lastReminderHours > earlyReminderInterval) {
-                    sendReminder(client, e);
+                    sendReminder(e);
                     console.log("ran early");
                     tasks = updateTaskReminderDate(tasks, e);
                 }
             } else if (earlyReminderThreshold < dateCreatedHours && dateCreatedHours < lateReminderThreshold) {
                 if (lastReminderHours > lateReminderInterval) {
-                    sendReminder(client, e);
+                    sendReminder(e);
                     console.log("ran late");
                     tasks = updateTaskReminderDate(tasks, e);
                 }
             } else if (lastReminderHours > runInterval) {
-                sendReminder(client, e);
+                sendReminder(e);
                 console.log("ran else");
                 tasks = updateTaskReminderDate(tasks, e);
             }
@@ -94,7 +94,6 @@ client.on('ready', () => {
 
 client.on('message', msg => {
 
-    // for @ing the bot
     if (msg.author.bot) return false;
     if (msg.content.includes('@here') || msg.content.includes('@everyone')) return false;
     if (msg.content.startsWith(prefix)) {
@@ -108,8 +107,14 @@ client.on('message', msg => {
         if (command == "ping") {
             msg.channel.send("clean-bot online");
             return false;
-        } else if (command == "test") {
-            reminders();
+        } else if (command == "reminders") {
+            fs.readFile("data.json", function (err, data) {
+                if (err) throw err;
+                let tasks = JSON.parse(data);
+                tasks.forEach(e => {
+                    sendReminder(e);
+                });
+            });
             return false;
         }
 
@@ -141,7 +146,7 @@ client.on('message', msg => {
                         console.log("Done writing!");
                     });
 
-                    sendReminder(client, newTask);
+                    sendReminder(newTask);
 
                 });
                 break;
