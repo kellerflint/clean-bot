@@ -2,6 +2,20 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const fs = require("fs");
 
+// things loaded from secrets
+var guildId;
+var channelId;
+
+fs.readFile("secrets.json", function (err, data) {
+    if (err) throw err;
+    const f = JSON.parse(data);
+
+    guildId = f.guildId;
+    channelId = f.channelId;
+
+    client.login(f.token);
+});
+
 const prefix = '!';
 
 // in hours
@@ -17,14 +31,24 @@ function between(min, max) {
     )
 }
 
+function updateTaskReminderDate(tasks, item) {
+    for (let i = 0; i < tasks.length; i++) {
+        if (tasks[i].id == item.id) {
+            tasks[i].lastreminder = Date.now();
+        }
+    }
+    return tasks;
+}
+
 function sendReminder(messageClient, task) {
-    messageClient.channels.cache.find(i => i.name === 'general').send('@everyone ' + task.task);
+    //messageClient.channels.cache.find(i => i.name === 'general').send();
+    client.guilds.resolve(guildId).channels.resolve(channelId).send('@everyone ' + task.task)
 }
 
 function reminders() {
     fs.readFile("data.json", function (err, data) {
         if (err) throw err;
-        const tasks = JSON.parse(data);
+        let tasks = JSON.parse(data);
         tasks.forEach(e => {
             console.log("Checking reminders")
 
@@ -39,31 +63,18 @@ function reminders() {
                 if (lastReminderHours > earlyReminderInterval) {
                     sendReminder(client, e);
                     console.log("ran early");
-                    for (let i = 0; i < tasks.length; i++) {
-                        if (tasks[i].id == e.id) {
-                            tasks[i].lastreminder = Date.now();
-                        }
-                    }
-
+                    tasks = updateTaskReminderDate(tasks, e);
                 }
             } else if (earlyReminderThreshold < dateCreatedHours && dateCreatedHours < lateReminderThreshold) {
                 if (lastReminderHours > lateReminderInterval) {
                     sendReminder(client, e);
                     console.log("ran late");
-                    for (let i = 0; i < tasks.length; i++) {
-                        if (tasks[i].id == e.id) {
-                            tasks[i].lastreminder = Date.now();
-                        }
-                    }
+                    tasks = updateTaskReminderDate(tasks, e);
                 }
-            } else {
+            } else if (lastReminderHours > runInterval) {
                 sendReminder(client, e);
                 console.log("ran else");
-                for (let i = 0; i < tasks.length; i++) {
-                    if (tasks[i].id == e.id) {
-                        tasks[i].lastreminder = Date.now();
-                    }
-                }
+                tasks = updateTaskReminderDate(tasks, e);
             }
 
             fs.writeFile("data.json", JSON.stringify(tasks), err => {
@@ -134,18 +145,18 @@ client.on('message', msg => {
 
                 });
                 break;
+            case "done":
+                fs.readFile("data.json", function (err, data) {
+                    if (err) throw err;
+                    const tasks = JSON.parse(data);
+                });
+                break;
             default:
                 msg.channel.send("Invalid input. The command you entered does not exist.");
                 break;
         }
     }
 
-});
-
-fs.readFile("secrets.json", function (err, data) {
-    if (err) throw err;
-    const f = JSON.parse(data);
-    client.login(f.token);
 });
 
 
