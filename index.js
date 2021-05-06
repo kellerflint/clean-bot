@@ -58,7 +58,7 @@ const removeEmptyOrNull = (obj) => {
 
 function sendReminder(task) {
     //messageClient.channels.cache.find(i => i.name === 'general').send();
-    client.guilds.resolve(guildId).channels.resolve(channelId).send('@everyone Task: ' + task.task + ' ID: ' + task.id);
+    client.guilds.resolve(guildId).channels.resolve(channelId).send(`Task: **${task.task}** \nID: ${task.id} \nAssigned: ${task.assignedTo}\nDescription: ${task.desciption}`);
 }
 
 function sendMessage(message) {
@@ -116,7 +116,6 @@ client.on('ready', () => {
 client.on('message', msg => {
 
     if (msg.author.bot) return false;
-    if (msg.content.includes('@here') || msg.content.includes('@everyone')) return false;
     if (msg.content.startsWith(prefix)) {
 
         // parse command
@@ -137,16 +136,23 @@ client.on('message', msg => {
                 });
             });
             return false;
+        } else if (command == "help") {
+            msg.channel.send("Commands: \n" +
+                "**!help** -> Show list of available commands\n" +
+                "**!ping** -> Test if clean-bot is online\n" +
+                "**!reminders** -> Show a list of all incomplete tasks\n" +
+                "**!task {TaskName} {@username} {Task Description ...}** -> Assign a task. All arguments after the TaskName are optional. No spaces in the TaskName but there can be spaces in the description\n" +
+                "**!done {id}** -> Complete a task with the given ID");
+            return false;
         }
 
         if (args.length < 2) {
             msg.channel.send("Invalid input. The command you entered does not exist.");
-            console.log(msg.guild);
             return false;
         }
 
         // commands with one or more parameters
-        let taskName = args[1].toLocaleLowerCase();
+        let taskName = args[1];
 
         switch (command) {
             case "task":
@@ -154,12 +160,39 @@ client.on('message', msg => {
                     if (err) throw err;
                     const tasks = JSON.parse(data);
 
+                    let mentions = "@everyone";
+                    let isAssigned = false;
+
+                    if (args.length > 2 && args[2].startsWith("<@")) {
+                        mentions = args[2];
+                        isAssigned = true;
+                    }
+
+                    console.log(args[2]);
+
+                    let desciption = "";
+                    if (args.length > 3) {
+                        let wordArray = [];
+                        if (isAssigned) {
+                            wordArray = args.splice(3, args.length);
+                        } else {
+                            wordArray = args.splice(2, args.length);
+                        }
+                        desciption = wordArray.join(" ");
+                    }
+
                     let newTask = {
                         id: between(1000, 9999),
                         task: taskName,
                         datetime: Date.now(),
-                        lastreminder: Date.now()
+                        lastreminder: Date.now(),
+                        assignedTo: mentions,
+                        desciption: desciption
                     };
+
+                    //client.guilds.resolve(guildId).channels.resolve(channelId).send(`${mention}`);
+
+                    //console.log(msg);
 
                     tasks.push(newTask);
 
