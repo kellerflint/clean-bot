@@ -13,8 +13,13 @@ fs.readFile("secrets.json", function (err, data) {
     if (err) throw err;
     const f = JSON.parse(data);
 
-    guildId = f.guildId;
-    channelId = f.channelId;
+    // production creds
+    //guildId = f.guildId;
+    //channelId = f.channelId;
+
+    // dev creds
+    guildId = f.devGuildId;
+    channelId = f.devChannelId;
 
     client.login(f.token);
 });
@@ -22,11 +27,11 @@ fs.readFile("secrets.json", function (err, data) {
 const prefix = '!';
 
 // in hours
-const runInterval = 1; // 1
-const earlyReminderInterval = 24; // 24
-const lateReminderInterval = 12; // 12
-const earlyReminderThreshold = 6; // 6
-const lateReminderThreshold = 48; // 48
+const runInterval = 1;
+const earlyReminderInterval = 12;
+const lateReminderInterval = 6;
+const earlyReminderThreshold = 24;
+const lateReminderThreshold = 48;
 
 function between(min, max) {
     return Math.floor(
@@ -136,6 +141,7 @@ client.on('message', msg => {
 
         if (args.length < 2) {
             msg.channel.send("Invalid input. The command you entered does not exist.");
+            console.log(msg.guild);
             return false;
         }
 
@@ -205,3 +211,4 @@ client.on('message', msg => {
 
 // running on the server with pm2:  npm install pm2@latest -g
 // pm2 start index.js
+// https://pm2.keymetrics.io/docs/usage/quick-start/
